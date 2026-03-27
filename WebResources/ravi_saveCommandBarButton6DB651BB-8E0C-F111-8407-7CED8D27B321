@@ -1,0 +1,12 @@
+function openDescriptionPopup(executionContext) {
+    var formContext = executionContext.getFormContext();
+
+    var input = prompt("Enter description:");
+
+    if (input && input.trim() !== "") {
+        formContext.getAttribute("ravi_description").setValue(input);
+
+        // Save the record
+        formContext.data.save();
+    }
+}

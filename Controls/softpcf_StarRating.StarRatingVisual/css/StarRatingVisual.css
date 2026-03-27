@@ -1,0 +1,83 @@
+/* ── StarRatingVisual.css ─────────────────────────────────────────── */
+
+/* Root wrapper — flex row, vertically centred */
+.sr-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  flex-wrap: wrap;
+}
+
+/* Stars row — holds all the star buttons */
+.sr-stars-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Individual star button */
+.sr-star {
+  background: none;
+  border: none;
+  padding: 2px;
+  margin: 0;
+  cursor: pointer;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s ease;
+  outline: none;
+  line-height: 1;
+}
+
+.sr-star:hover       { transform: scale(1.2); }
+.sr-star:active      { transform: scale(0.9); }
+.sr-star:disabled    { cursor: default; opacity: 0.45; transform: none; }
+
+/* Keyboard focus ring (only shown on keyboard nav, not on click) */
+.sr-star:focus-visible {
+  outline: 2px solid #0078d4;
+  outline-offset: 2px;
+}
+
+/* SVG inside each star — pointer-events none so the button receives clicks */
+.sr-star svg {
+  display: block;
+  pointer-events: none;
+  transition: fill 0.08s ease, stroke 0.08s ease;
+}
+
+/* Numeric label  e.g. "4 / 5" */
+.sr-label {
+  font-size: 13px;
+  color: #666;
+  min-width: 32px;
+  white-space: nowrap;
+}
+
+/* Clear / reset button */
+.sr-clear-btn {
+  background: none;
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #888;
+  cursor: pointer;
+  padding: 3px 8px;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+
+.sr-clear-btn:hover {
+  background: #fff0f0;
+  color: #c0392b;
+  border-color: #e57373;
+}
+
+.sr-clear-btn:active      { transform: scale(0.96); }
+.sr-clear-btn:focus-visible {
+  outline: 2px solid #0078d4;
+  outline-offset: 2px;
+}

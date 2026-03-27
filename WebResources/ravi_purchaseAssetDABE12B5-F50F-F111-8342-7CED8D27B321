@@ -1,0 +1,45 @@
+async function purchaseAsset(executionContext) {
+
+    var formContext = executionContext.getFormContext();
+
+    var hasRole = await userHasRoleAsync("IT - AMS- User");
+
+    if (hasRole) {
+        hideSection(formContext);
+    }
+}
+
+async function userHasRoleAsync(roleNameToCheck) {
+
+    return new Promise(function (resolve) {
+
+        var roles = Xrm.Utility.getGlobalContext().userSettings.roles;
+
+        var found = false;
+
+        roles.forEach(function (role) {
+            if (role.name === roleNameToCheck) {
+                found = true;
+            }
+        });
+
+        resolve(found);
+    });
+}
+
+
+function hideSection(formContext) {
+
+    var tabName = "general";
+    var sectionName = "null_section_3";
+
+    var tab = formContext.ui.tabs.get(tabName);
+
+    if (tab) {
+        var section = tab.sections.get(sectionName);
+
+        if (section) {
+            section.setVisible(false);
+        }
+    }
+}

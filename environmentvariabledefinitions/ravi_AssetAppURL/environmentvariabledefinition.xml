@@ -1,0 +1,11 @@
+<environmentvariabledefinition schemaname="ravi_AssetAppURL">
+  <defaultvalue>https://org431c7974.crm8.dynamics.com/main.aspx?appid=c2f7f927-83f6-f011-8407-7ced8d27b321&amp;pagetype=entityrecord&amp;etn=cra7c_assetallocation</defaultvalue>
+  <displayname default="Asset App URL">
+    <label description="Asset App URL" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.2.0.9</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

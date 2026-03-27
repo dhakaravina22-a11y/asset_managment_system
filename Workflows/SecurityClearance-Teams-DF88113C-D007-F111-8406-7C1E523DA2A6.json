@@ -1,0 +1,229 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_fea75"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_approvals": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedapprovals_d6a35"
+        },
+        "api": {
+          "name": "shared_approvals"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "418c4254-46e3-41bd-a8d7-3682666c873a"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "cra7c_assetallocation",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filterexpression": "_cra7c_assets_value eq 0da68f21-4e07-f111-8406-6045bdac29ec or _cra7c_assets_value eq 00946506-84f6-f011-8407-7ced8d27b321"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "get_user_which_belongs_to_approval-team": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "752aceb8-e8df-49e7-9125-9a799a07f3a1"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "systemusers",
+              "fetchXml": "<fetch version=\"1.0\" output-format=\"xml-platform\" mapping=\"logical\" distinct=\"true\">\n  <entity name=\"systemuser\">\n    <attribute name=\"internalemailaddress\" />\n    <link-entity name=\"teammembership\" from=\"systemuserid\" to=\"systemuserid\" intersect=\"true\">\n      <link-entity name=\"team\" from=\"teamid\" to=\"teamid\">\n        <filter type=\"and\">\n          <condition attribute=\"name\" operator=\"eq\" value=\"Approval - Team\" />\n        </filter>\n      </link-entity>\n    </link-entity>\n  </entity>\n</fetch>"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Select": {
+          "runAfter": {
+            "get_user_which_belongs_to_approval-team": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "132265a4-487b-4d7d-816c-7b72217b9b6d"
+          },
+          "type": "Select",
+          "inputs": {
+            "from": "@outputs('get_user_which_belongs_to_approval-team')?['body/value']",
+            "select": "@item()?['internalemailaddress']"
+          }
+        },
+        "Compose": {
+          "runAfter": {
+            "Select": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "1799828b-e7b0-4a3d-b091-712e0afe8911"
+          },
+          "type": "Compose",
+          "inputs": "@join(body('Select'), ';')"
+        },
+        "Start_and_wait_for_an_approval": {
+          "runAfter": {
+            "Compose": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "b0390698-fa2e-46b4-ab14-ca858c588249"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_approvals",
+              "operationId": "StartAndWaitForAnApproval",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_approvals"
+            },
+            "parameters": {
+              "approvalType": "Basic",
+              "WebhookApprovalCreationInput/title": "Security Clearance required !!",
+              "WebhookApprovalCreationInput/assignedTo": "@{outputs('Compose')};",
+              "WebhookApprovalCreationInput/details": "A new Security Clearance request has been submitted.\n\nRequested By: @{triggerOutputs()?['body/_createdby_value']}\nDepartment: @{triggerOutputs()?['body/_ravi_department_value']}\nReason: @{triggerOutputs()?['body/cra7c_name']}\nDate Submitted: @{triggerOutputs()?['body/createdon']}",
+              "WebhookApprovalCreationInput/enableNotifications": true,
+              "WebhookApprovalCreationInput/enableReassignment": true
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Update_a_row_3": {
+          "runAfter": {
+            "Compose": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "bc6a7ef7-4763-477e-b280-4d04997197f7"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateOnlyRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "cra7c_assetallocations",
+              "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+              "item/cra7c_approvalstatus": 793370002
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Condition_2": {
+          "actions": {
+            "Update_a_row_5": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "85b2f296-da69-4133-9463-fd7404dacfe0"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "UpdateOnlyRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cra7c_assetallocations",
+                  "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+                  "item/cra7c_approvalstatus": 793370003,
+                  "item/cra7c_securityclearance": true
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {
+            "Update_a_row_3": [
+              "Succeeded"
+            ],
+            "Start_and_wait_for_an_approval": [
+              "Succeeded"
+            ]
+          },
+          "else": {
+            "actions": {
+              "Update_a_row_4": {
+                "runAfter": {},
+                "metadata": {
+                  "operationMetadataId": "479125e8-87f6-44e3-93fe-895bd4495c2b"
+                },
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "shared_commondataserviceforapps",
+                    "operationId": "UpdateOnlyRecord",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                  },
+                  "parameters": {
+                    "entityName": "cra7c_assetallocations",
+                    "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+                    "item/cra7c_approvalstatus": 793370004,
+                    "item/cra7c_securityclearance": false
+                  },
+                  "authentication": "@parameters('$authentication')"
+                }
+              }
+            }
+          },
+          "expression": {
+            "equals": [
+              "@outputs('Start_and_wait_for_an_approval')?['body/outcome']",
+              "Approve"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "8eb0a353-d3d8-41da-827e-d0e3e2004e29"
+          },
+          "type": "If"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

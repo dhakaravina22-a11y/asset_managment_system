@@ -1,0 +1,19 @@
+function preventStageChange(executionContext) {
+    var formContext = executionContext.getFormContext();
+
+    if (formContext.data.process) {
+        formContext.data.process.addOnPreStageChange(function (context) {
+            var eventArgs = context.getEventArgs();
+
+            // Stop the stage change
+            eventArgs.preventDefault();
+
+            // Show error message
+            formContext.ui.setFormNotification(
+                "You cannot move stages manually. The process is controlled automatically.",
+                "ERROR",
+                "stage_lock"
+            );
+        });
+    }
+}

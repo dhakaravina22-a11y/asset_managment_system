@@ -1,0 +1,37 @@
+<appaction uniquename="ravi__SendEmail!b7ae0eeb65f14f39bf094099991ad9b8!ravi_AssetManagmentSystem!cra7c_assetallocation!0">
+  <appmoduleid>
+    <uniquename>ravi_AssetManagmentSystem</uniquename>
+  </appmoduleid>
+  <buttonlabeltext default="SendEmail">
+    <label description="SendEmail" languagecode="1033" />
+  </buttonlabeltext>
+  <context>1</context>
+  <contextentity>
+    <logicalname>cra7c_assetallocation</logicalname>
+  </contextentity>
+  <contextvalue>cra7c_assetallocation</contextvalue>
+  <fonticon>$clientsvg:Mail</fonticon>
+  <hidden>0</hidden>
+  <iscustomizable>1</iscustomizable>
+  <isdisabled>0</isdisabled>
+  <isgrouptitlehidden>0</isgrouptitlehidden>
+  <location>0</location>
+  <name>SendEmail!b7ae0eeb65f14f39bf094099991ad9b8</name>
+  <onclickeventjavascriptfunctionname>sendEmailUsingHttpTrigger</onclickeventjavascriptfunctionname>
+  <onclickeventjavascriptparameters>[{"type":5}]</onclickeventjavascriptparameters>
+  <onclickeventjavascriptwebresourceid>
+    <webresourceid>5a6dbe2d-890d-f111-8407-7ced8d27b321</webresourceid>
+  </onclickeventjavascriptwebresourceid>
+  <onclickeventtype>2</onclickeventtype>
+  <origin>0</origin>
+  <sequence>100100015.0000000000</sequence>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+  <type>0</type>
+  <visibilityformulacomponentlibraryid>
+    <name>ravi_assetmanagmentsystemdefaultcommandlibrary_a9387</name>
+  </visibilityformulacomponentlibraryid>
+  <visibilityformulacomponentname>cb66ee44b60b4f91b398f00870fff4d5</visibilityformulacomponentname>
+  <visibilityformulafunctionname>Visible</visibilityformulafunctionname>
+  <visibilitytype>1</visibilitytype>
+</appaction>

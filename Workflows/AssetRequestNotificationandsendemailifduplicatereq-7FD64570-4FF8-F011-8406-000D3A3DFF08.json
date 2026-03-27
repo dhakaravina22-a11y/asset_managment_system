@@ -1,0 +1,366 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_fea75"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_c61f8"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      },
+      "shared_onedriveforbusiness": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedonedriveforbusiness_e3908"
+        },
+        "api": {
+          "name": "shared_onedriveforbusiness"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        },
+        "Asset App URL (ravi_AssetAppURL)": {
+          "defaultValue": "https://org431c7974.crm8.dynamics.com/main.aspx?appid=c2f7f927-83f6-f011-8407-7ced8d27b321&pagetype=entityrecord&etn=cra7c_assetallocation",
+          "type": "String",
+          "metadata": {
+            "schemaName": "ravi_AssetAppURL"
+          }
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "d0500620-466a-43e2-a0d4-9f60edd2c108"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "cra7c_assetallocation",
+              "subscriptionRequest/scope": 4
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "conditions": []
+        }
+      },
+      "actions": {
+        "If_Status_=_\"requested\"_": {
+          "actions": {
+            "Get_User_Details": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "e8831b79-50d4-4867-ac78-a961fe8f78c5"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "systemusers",
+                  "recordId": "@triggerOutputs()?['body/_createdby_value']",
+                  "x-ms-odata-metadata-full": true
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Send_an_email_(V2)": {
+              "runAfter": {
+                "Convert_file": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "eccca252-ac5c-4edb-9f82-e0a54650e042"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_office365",
+                  "operationId": "SendEmailV2",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+                },
+                "parameters": {
+                  "emailMessage/To": "@outputs('Get_User_Details')?['body/internalemailaddress']",
+                  "emailMessage/Subject": "📥 Confirmation: Asset Allocation Request Received  @{triggerOutputs()?['body/cra7c_name']}",
+                  "emailMessage/Body": "<p>Dear @{outputs('Get_User_Details')?['body/firstname']},<br>\nThank you for submitting your asset request. This email is to confirm that we have successfully received your application.<br>\n<br>\n<strong>Request Details:</strong><br>\n@{utcNow()}\nAsset Requested: @{outputs('Asset_Details')?['body/cra7c_name']}<br>\nReason for Request: @{triggerOutputs()?['body/cra7c_name']}<br>\nCurrent Status:@{outputs('Get_Asset_Allocation_Details')?['body/cra7c_status@OData.Community.Display.V1.FormattedValue']}<br>\nDate Submitted: @{formatDateTime(triggerOutputs()?['body/createdon'], 'MM/dd/yyyy')}<br>\n<br>\n<p>\n<a href=\"@{parameters('Asset App URL (ravi_AssetAppURL)')}&id=@{triggerOutputs()?['body/cra7c_assetallocationid']}\" >Click here to view the records </a>\n</p>\n\n<strong>What’s next?</strong><br>\nOur IT/Operations team will review your request. You will receive another notification once the status of your request changes or if an asset has been assigned to you.<br>\nIf you have any questions in the meantime, please reply to this email or contact the helpdesk.<br>\n<br>\nBest regards,<br>\n<strong>IT Asset Management Team</strong><br>\n</p>",
+                  "emailMessage/Attachments": [
+                    {
+                      "Name": "MyDocument.pdf",
+                      "ContentBytes": "@body('Convert_file')"
+                    }
+                  ],
+                  "emailMessage/Importance": "Normal"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Asset_Details": {
+              "runAfter": {
+                "Get_Asset_Allocation_Details": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "33ee76da-2266-4cb6-882a-01a37fd29347"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cra7c_assetses",
+                  "recordId": "@triggerOutputs()?['body/_cra7c_assets_value']"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Compose": {
+              "runAfter": {
+                "Asset_Details": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "12d02fcd-3363-4224-97ac-4030f1f30061"
+              },
+              "type": "Compose",
+              "inputs": "<h1>Invoice</h1><p>Date: @{utcNow()}</p>)\n@{outputs('Asset_Details')?['body/cra7c_name']}\n@{outputs('Asset_Details')?['body/createdon']}\n@{outputs('Asset_Details')?['body/cra7c_category']}\n@{outputs('Asset_Details')?['body/ravi_price']}"
+            },
+            "Create_file": {
+              "runAfter": {
+                "Compose": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "9c9b7dc4-51de-419d-be2a-010bba7d51e2"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_onedriveforbusiness",
+                  "operationId": "CreateFile",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+                },
+                "parameters": {
+                  "folderPath": "/Documents",
+                  "name": "Document.html",
+                  "body": "@outputs('Compose')"
+                },
+                "authentication": "@parameters('$authentication')"
+              },
+              "runtimeConfiguration": {
+                "contentTransfer": {
+                  "transferMode": "Chunked"
+                }
+              }
+            },
+            "Convert_file": {
+              "runAfter": {
+                "Create_file": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "b55f7d65-ddac-478f-8a6e-9bcb9f5ce602"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_onedriveforbusiness",
+                  "operationId": "ConvertFile",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+                },
+                "parameters": {
+                  "id": "@outputs('Create_file')?['body/Id']",
+                  "type": "PDF"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Get_Asset_Allocation_Details": {
+              "runAfter": {
+                "Get_User_Details": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "21740e84-a78f-4a5a-a914-ec6a156c8101"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cra7c_assetallocations",
+                  "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+                  "x-ms-odata-metadata-full": true
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {},
+          "expression": {
+            "equals": [
+              "@triggerOutputs()?['body/cra7c_status']",
+              793370000
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "b872dace-e4bd-4f3b-9338-3ad828e2af1a"
+          },
+          "type": "If",
+          "description": "When a user request for an asset send them a confirmation email"
+        },
+        "Filter_those_rows_which_has_same_title_and_created_by_same_person": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "75be2df2-29b7-44de-962c-62fd165a7801"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "cra7c_assetallocations",
+              "$filter": "cra7c_name eq '@{triggerOutputs()?['body/cra7c_name']}' and _createdby_value eq '@{triggerOutputs()?['body/_createdby_value']}' and (statecode eq 0) and cra7c_assetallocationid ne '@{triggerOutputs()?['body/cra7c_assetallocationid']}'"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Condition": {
+          "actions": {
+            "Set_Status_to_\"Inactive\"": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "127cbbbd-f83b-4087-84c2-00f9c38e6734"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "UpdateOnlyRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cra7c_assetallocations",
+                  "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+                  "item/statecode": 1,
+                  "item/statuscode": 2
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Send_an_email_(V2)_2": {
+              "runAfter": {
+                "Get_Email_ID": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "adb5b7f2-2142-46e3-b61b-5d5cfa3414e3"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_office365",
+                  "operationId": "SendEmailV2",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+                },
+                "parameters": {
+                  "emailMessage/To": "@outputs('Get_Email_ID')?['body/internalemailaddress']",
+                  "emailMessage/Subject": "Duplicate Asset Detected",
+                  "emailMessage/Body": "<p>Duplicate Asset Request Detected !!</p>",
+                  "emailMessage/Importance": "Normal"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            },
+            "Get_Email_ID": {
+              "runAfter": {
+                "Set_Status_to_\"Inactive\"": [
+                  "Succeeded"
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "47ffef5a-699c-4431-8a65-9c91bf620c0a"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "GetItem",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "systemusers",
+                  "recordId": "@outputs('Set_Status_to_\"Inactive\"')?['body/_createdby_value']",
+                  "$select": "internalemailaddress"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {
+            "Filter_those_rows_which_has_same_title_and_created_by_same_person": [
+              "Succeeded"
+            ]
+          },
+          "expression": {
+            "greater": [
+              "@length(outputs('Filter_those_rows_which_has_same_title_and_created_by_same_person')?['body/value'])",
+              0
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "b9cdd055-696e-4d70-bac2-95c2f80edc99"
+          },
+          "type": "If"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

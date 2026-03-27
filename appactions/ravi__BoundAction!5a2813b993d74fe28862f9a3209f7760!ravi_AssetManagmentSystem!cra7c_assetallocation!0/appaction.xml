@@ -1,0 +1,32 @@
+<appaction uniquename="ravi__BoundAction!5a2813b993d74fe28862f9a3209f7760!ravi_AssetManagmentSystem!cra7c_assetallocation!0">
+  <appmoduleid>
+    <uniquename>ravi_AssetManagmentSystem</uniquename>
+  </appmoduleid>
+  <buttonlabeltext default="BoundAction">
+    <label description="BoundAction" languagecode="1033" />
+  </buttonlabeltext>
+  <context>1</context>
+  <contextentity>
+    <logicalname>cra7c_assetallocation</logicalname>
+  </contextentity>
+  <contextvalue>cra7c_assetallocation</contextvalue>
+  <fonticon>Anchor</fonticon>
+  <hidden>0</hidden>
+  <iscustomizable>1</iscustomizable>
+  <isdisabled>0</isdisabled>
+  <isgrouptitlehidden>0</isgrouptitlehidden>
+  <location>0</location>
+  <name>BoundAction!5a2813b993d74fe28862f9a3209f7760</name>
+  <onclickeventjavascriptfunctionname>sendEmailUsingUnboundAction</onclickeventjavascriptfunctionname>
+  <onclickeventjavascriptparameters>[{"type":5}]</onclickeventjavascriptparameters>
+  <onclickeventjavascriptwebresourceid>
+    <webresourceid>882041dd-8114-f111-8342-7ced8d27b321</webresourceid>
+  </onclickeventjavascriptwebresourceid>
+  <onclickeventtype>2</onclickeventtype>
+  <origin>0</origin>
+  <sequence>100100012.5000000000</sequence>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+  <type>0</type>
+  <visibilitytype>0</visibilitytype>
+</appaction>

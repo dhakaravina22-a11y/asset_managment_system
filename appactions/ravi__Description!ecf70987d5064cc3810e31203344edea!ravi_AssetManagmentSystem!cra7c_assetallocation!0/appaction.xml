@@ -1,0 +1,32 @@
+<appaction uniquename="ravi__Description!ecf70987d5064cc3810e31203344edea!ravi_AssetManagmentSystem!cra7c_assetallocation!0">
+  <appmoduleid>
+    <uniquename>ravi_AssetManagmentSystem</uniquename>
+  </appmoduleid>
+  <buttonlabeltext default="Description">
+    <label description="Description" languagecode="1033" />
+  </buttonlabeltext>
+  <context>1</context>
+  <contextentity>
+    <logicalname>cra7c_assetallocation</logicalname>
+  </contextentity>
+  <contextvalue>cra7c_assetallocation</contextvalue>
+  <fonticon>AddProductFamily</fonticon>
+  <hidden>0</hidden>
+  <iscustomizable>1</iscustomizable>
+  <isdisabled>0</isdisabled>
+  <isgrouptitlehidden>0</isgrouptitlehidden>
+  <location>0</location>
+  <name>Description!ecf70987d5064cc3810e31203344edea</name>
+  <onclickeventjavascriptfunctionname>openDescriptionPopup</onclickeventjavascriptfunctionname>
+  <onclickeventjavascriptparameters>[{"type":5}]</onclickeventjavascriptparameters>
+  <onclickeventjavascriptwebresourceid>
+    <webresourceid>63bfbf17-aab8-e911-a98a-000d3af475aa</webresourceid>
+  </onclickeventjavascriptwebresourceid>
+  <onclickeventtype>2</onclickeventtype>
+  <origin>0</origin>
+  <sequence>100100045.0000000000</sequence>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+  <type>0</type>
+  <visibilitytype>0</visibilitytype>
+</appaction>

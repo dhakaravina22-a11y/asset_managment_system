@@ -1,0 +1,573 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_fea75"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_approvals_1": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedapprovals_91b0c"
+        },
+        "api": {
+          "name": "shared_approvals"
+        }
+      },
+      "shared_approvals_2": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedapprovals_86b41"
+        },
+        "api": {
+          "name": "shared_approvals"
+        }
+      },
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_c61f8"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "7e4ca38b-b90e-4901-8496-52ac93317c2e"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "cra7c_assetallocation",
+              "subscriptionRequest/scope": 4
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "When user request for an asset, the request will go to manager, manger can approve or discard the request, if manager approves then send an email to user that their request has been approved"
+        }
+      },
+      "actions": {
+        "User_Details": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "190ec74e-f3f5-48aa-a47b-0470cce567ba"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "systemusers",
+              "recordId": "@triggerOutputs()?['body/_createdby_value']"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Asset_Requst": {
+          "runAfter": {
+            "User_Details": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "7fb832ce-e664-4f2c-9dd8-d4e797906107"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "cra7c_assetses",
+              "recordId": "@triggerOutputs()?['body/_cra7c_assets_value']"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "manager_Details": {
+          "runAfter": {
+            "Asset_Requst": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "26274eff-756d-4e1a-9f17-c888d2a28a95"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "systemusers",
+              "recordId": "@outputs('User_Details')?['body/_cra7c_managername_value']"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Start_and_wait_for_an_approval-_Manager_Approval": {
+          "runAfter": {
+            "manager_Details": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "d27abe02-142b-4a98-b13a-6cfb71ed7550"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_approvals_1",
+              "operationId": "StartAndWaitForAnApproval",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_approvals"
+            },
+            "parameters": {
+              "approvalType": "Basic",
+              "WebhookApprovalCreationInput/title": "New Asset Request: @{outputs('Asset_Requst')?['body/cra7c_name']} from @{outputs('User_Details')?['body/fullname']}\n",
+              "WebhookApprovalCreationInput/assignedTo": "@outputs('manager_Details')?['body/internalemailaddress']",
+              "WebhookApprovalCreationInput/details": "\nAsset Details :\n@{outputs('Asset_Requst')?['body/cra7c_name']}\n@{outputs('Asset_Requst')?['body/ravi_quantity']}\n@{outputs('Asset_Requst')?['body/cra7c_category']}\n\nUser Details :\n@{outputs('User_Details')?['body/fullname']}@{outputs('User_Details')?['body/_cra7c_deptname_value']}\n",
+              "WebhookApprovalCreationInput/enableNotifications": true,
+              "WebhookApprovalCreationInput/enableReassignment": true
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Update_Approval_status_to_\"Manger_Review\"": {
+          "runAfter": {
+            "manager_Details": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "b83df415-e1dc-4c1b-9071-5c33bf1ecb9d"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateOnlyRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "cra7c_assetallocations",
+              "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+              "item/cra7c_approvalstatus": 2
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "If_outcome_is_equal_to_Approve": {
+          "actions": {
+            "Condition": {
+              "actions": {
+                "get_user_which_belongs_to_approval-team": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "752aceb8-e8df-49e7-9125-9a799a07f3a1"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "ListRecords",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                    },
+                    "parameters": {
+                      "entityName": "systemusers",
+                      "fetchXml": "<fetch version=\"1.0\" output-format=\"xml-platform\" mapping=\"logical\" distinct=\"true\">\n  <entity name=\"systemuser\">\n    <attribute name=\"internalemailaddress\" />\n    <link-entity name=\"teammembership\" from=\"systemuserid\" to=\"systemuserid\" intersect=\"true\">\n      <link-entity name=\"team\" from=\"teamid\" to=\"teamid\">\n        <filter type=\"and\">\n          <condition attribute=\"name\" operator=\"eq\" value=\"Approval - Team\" />\n        </filter>\n      </link-entity>\n    </link-entity>\n  </entity>\n</fetch>"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                },
+                "Select": {
+                  "runAfter": {
+                    "get_user_which_belongs_to_approval-team": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "132265a4-487b-4d7d-816c-7b72217b9b6d"
+                  },
+                  "type": "Select",
+                  "inputs": {
+                    "from": "@outputs('get_user_which_belongs_to_approval-team')?['body/value']",
+                    "select": "@item()?['internalemailaddress']"
+                  }
+                },
+                "Compose": {
+                  "runAfter": {
+                    "Select": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "1799828b-e7b0-4a3d-b091-712e0afe8911"
+                  },
+                  "type": "Compose",
+                  "inputs": "@join(body('Select'), ';')"
+                },
+                "Start_and_wait_for_an_approval_-_Security_Clearance_Approval": {
+                  "runAfter": {
+                    "Compose": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "b0390698-fa2e-46b4-ab14-ca858c588249"
+                  },
+                  "type": "OpenApiConnectionWebhook",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_approvals_2",
+                      "operationId": "StartAndWaitForAnApproval",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_approvals"
+                    },
+                    "parameters": {
+                      "approvalType": "Basic",
+                      "WebhookApprovalCreationInput/title": "Security Clearance required !!",
+                      "WebhookApprovalCreationInput/assignedTo": "@{outputs('Compose')};",
+                      "WebhookApprovalCreationInput/details": "A new Security Clearance request has been submitted.\n\nRequested By: @{triggerOutputs()?['body/_createdby_value']}\nDepartment: @{triggerOutputs()?['body/_ravi_department_value']}\nReason: @{triggerOutputs()?['body/cra7c_name']}\nDate Submitted: @{triggerOutputs()?['body/createdon']}",
+                      "WebhookApprovalCreationInput/enableNotifications": true,
+                      "WebhookApprovalCreationInput/enableReassignment": true
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                },
+                "Update_Approval_status_to_\"Security_Clearance\"": {
+                  "runAfter": {
+                    "Compose": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "bc6a7ef7-4763-477e-b280-4d04997197f7"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                    },
+                    "parameters": {
+                      "entityName": "cra7c_assetallocations",
+                      "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+                      "item/cra7c_approvalstatus": 3
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                },
+                "Condition_2": {
+                  "actions": {
+                    "update_approval_status_to_\"Approved\"": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "85b2f296-da69-4133-9463-fd7404dacfe0"
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "UpdateOnlyRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                        },
+                        "parameters": {
+                          "entityName": "cra7c_assetallocations",
+                          "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+                          "item/cra7c_approvalstatus": 4,
+                          "item/cra7c_securityclearance": true
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    },
+                    "UPDATE_approval_status_\"Assigned\"": {
+                      "runAfter": {
+                        "update_approval_status_to_\"Approved\"": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "48cdd5e0-faae-49ad-8cc0-6d0dd48ff903"
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "UpdateOnlyRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                        },
+                        "parameters": {
+                          "entityName": "cra7c_assetallocations",
+                          "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+                          "item/cra7c_approvalstatus": 6
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    },
+                    "Send_an_email_(V2)_-_Asset_Assigned_Email": {
+                      "runAfter": {
+                        "UPDATE_approval_status_\"Assigned\"": [
+                          "Succeeded"
+                        ]
+                      },
+                      "metadata": {
+                        "operationMetadataId": "732f6243-4a2a-4311-b667-fb80781c0ac9"
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_office365",
+                          "operationId": "SendEmailV2",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+                        },
+                        "parameters": {
+                          "emailMessage/To": "@outputs('User_Details')?['body/internalemailaddress']",
+                          "emailMessage/Subject": "Your Request is Approved!!!",
+                          "emailMessage/Body": "<p>Hello @{outputs('User_Details')?['body/firstname']},<br>\nYour request for an asset has been Approved by your manager.<br>\n<br>\n<span style=\"font-size: 14px\"><strong>Request Details:<br>\n</strong></span>Asset: @{outputs('Asset_Requst')?['body/cra7c_name']}<br>\nStatus: Assigned<br>\n<br>\n<span style=\"font-size: 14px\"><strong>Collection Instructions:</strong></span><br>\nPlease visit Building 3 on the 3rd Floor to collect your asset.<br>\n<strong>Time:</strong> Monday to Friday, 9:00 AM – 5:00 PM.<br>\n<strong>Note:</strong> Please bring your employee ID badge for verification.<br>\nIf you have any questions, please contact the IT Support team.<br>\nBest Regards,<br>\nAsset Management System\"</p>",
+                          "emailMessage/Importance": "High"
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    }
+                  },
+                  "runAfter": {
+                    "Start_and_wait_for_an_approval_-_Security_Clearance_Approval": [
+                      "Succeeded"
+                    ],
+                    "Update_Approval_status_to_\"Security_Clearance\"": [
+                      "Succeeded"
+                    ]
+                  },
+                  "else": {
+                    "actions": {
+                      "Update_Approval_Status_to_\"Denied\"": {
+                        "runAfter": {},
+                        "metadata": {
+                          "operationMetadataId": "479125e8-87f6-44e3-93fe-895bd4495c2b"
+                        },
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "shared_commondataserviceforapps",
+                            "operationId": "UpdateOnlyRecord",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                          },
+                          "parameters": {
+                            "entityName": "cra7c_assetallocations",
+                            "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+                            "item/cra7c_approvalstatus": 5,
+                            "item/cra7c_securityclearance": false
+                          },
+                          "authentication": "@parameters('$authentication')"
+                        }
+                      },
+                      "Send_an_email_-_Asset_Denied_Email": {
+                        "runAfter": {
+                          "Update_Approval_Status_to_\"Denied\"": [
+                            "Succeeded"
+                          ]
+                        },
+                        "metadata": {
+                          "operationMetadataId": "71f6f041-270d-4a68-9a55-84532c442c1d"
+                        },
+                        "type": "OpenApiConnection",
+                        "inputs": {
+                          "host": {
+                            "connectionName": "shared_office365",
+                            "operationId": "SendEmailV2",
+                            "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+                          },
+                          "parameters": {
+                            "emailMessage/To": "@outputs('User_Details')?['body/internalemailaddress']",
+                            "emailMessage/Subject": "Asset Request Denied",
+                            "emailMessage/Body": "<p>Dear User,<br>\n<br>\nYour asset request has been reviewed by Security Clearance team and has been denied.<br>\n<br>\nIf you believe this was done in error or need further clarification, please contact your manager or the IT support team.<br>\n<br>\nRegards,<br>\nIT Asset Team</p>",
+                            "emailMessage/Importance": "Normal"
+                          },
+                          "authentication": "@parameters('$authentication')"
+                        }
+                      }
+                    }
+                  },
+                  "expression": {
+                    "equals": [
+                      "@outputs('Start_and_wait_for_an_approval_-_Security_Clearance_Approval')?['body/outcome']",
+                      "Approve"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "8eb0a353-d3d8-41da-827e-d0e3e2004e29"
+                  },
+                  "type": "If"
+                }
+              },
+              "runAfter": {},
+              "else": {
+                "actions": {
+                  "UPDATE_approval_status_to__\"Assigned\"_2": {
+                    "runAfter": {},
+                    "metadata": {
+                      "operationMetadataId": "48cdd5e0-faae-49ad-8cc0-6d0dd48ff903"
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "shared_commondataserviceforapps",
+                        "operationId": "UpdateOnlyRecord",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                      },
+                      "parameters": {
+                        "entityName": "cra7c_assetallocations",
+                        "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+                        "item/cra7c_approvalstatus": 6
+                      },
+                      "authentication": "@parameters('$authentication')"
+                    }
+                  },
+                  "Asset_Assigned_Email": {
+                    "runAfter": {
+                      "UPDATE_approval_status_to__\"Assigned\"_2": [
+                        "Succeeded"
+                      ]
+                    },
+                    "metadata": {
+                      "operationMetadataId": "732f6243-4a2a-4311-b667-fb80781c0ac9"
+                    },
+                    "type": "OpenApiConnection",
+                    "inputs": {
+                      "host": {
+                        "connectionName": "shared_office365",
+                        "operationId": "SendEmailV2",
+                        "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+                      },
+                      "parameters": {
+                        "emailMessage/To": "@outputs('User_Details')?['body/internalemailaddress']",
+                        "emailMessage/Subject": "Your Request is Approved!!!",
+                        "emailMessage/Body": "<p>Hello @{outputs('User_Details')?['body/firstname']},<br>\nYour request for an asset has been Approved by your manager.<br>\n<br>\n<span style=\"font-size: 14px\"><strong>Request Details:<br>\n</strong></span>Asset: @{outputs('Asset_Requst')?['body/cra7c_name']}<br>\nStatus: Assigned<br>\n<br>\n<span style=\"font-size: 14px\"><strong>Collection Instructions:</strong></span><br>\nPlease visit Building 3 on the 3rd Floor to collect your asset.<br>\n<strong>Time:</strong> Monday to Friday, 9:00 AM – 5:00 PM.<br>\n<strong>Note:</strong> Please bring your employee ID badge for verification.<br>\nIf you have any questions, please contact the IT Support team.<br>\nBest Regards,<br>\nAsset Management System\"</p>",
+                        "emailMessage/Importance": "High"
+                      },
+                      "authentication": "@parameters('$authentication')"
+                    }
+                  }
+                }
+              },
+              "expression": {
+                "equals": [
+                  "@outputs('Asset_Requst')?['body/cra7c_isexternaldevice']",
+                  true
+                ]
+              },
+              "metadata": {
+                "operationMetadataId": "2313b790-3e1d-4703-a6bc-649161ef5515"
+              },
+              "type": "If"
+            }
+          },
+          "runAfter": {
+            "Start_and_wait_for_an_approval-_Manager_Approval": [
+              "Succeeded"
+            ],
+            "Update_Approval_status_to_\"Manger_Review\"": [
+              "Succeeded"
+            ]
+          },
+          "else": {
+            "actions": {
+              "Update_Approval_status_to_\"Denied_2\"": {
+                "runAfter": {},
+                "metadata": {
+                  "operationMetadataId": "479125e8-87f6-44e3-93fe-895bd4495c2b"
+                },
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "shared_commondataserviceforapps",
+                    "operationId": "UpdateOnlyRecord",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                  },
+                  "parameters": {
+                    "entityName": "cra7c_assetallocations",
+                    "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+                    "item/cra7c_approvalstatus": 5,
+                    "item/cra7c_securityclearance": false
+                  },
+                  "authentication": "@parameters('$authentication')"
+                }
+              },
+              "Send_an_email_-_Asset_Denied": {
+                "runAfter": {
+                  "Update_Approval_status_to_\"Denied_2\"": [
+                    "Succeeded"
+                  ]
+                },
+                "metadata": {
+                  "operationMetadataId": "71f6f041-270d-4a68-9a55-84532c442c1d"
+                },
+                "type": "OpenApiConnection",
+                "inputs": {
+                  "host": {
+                    "connectionName": "shared_office365",
+                    "operationId": "SendEmailV2",
+                    "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+                  },
+                  "parameters": {
+                    "emailMessage/To": "@outputs('User_Details')?['body/internalemailaddress']",
+                    "emailMessage/Subject": "Asset Request Denied",
+                    "emailMessage/Body": "<p>Dear User,<br>\n<br>\nYour asset request has been reviewed by your manager and has been denied.<br>\n<br>\nIf you believe this was done in error or need further clarification, please contact your manager or the IT support team.<br>\n<br>\nRegards,<br>\nIT Asset Team</p>",
+                    "emailMessage/Importance": "Normal"
+                  },
+                  "authentication": "@parameters('$authentication')"
+                }
+              }
+            }
+          },
+          "expression": {
+            "equals": [
+              "@outputs('Start_and_wait_for_an_approval-_Manager_Approval')?['body/outcome']",
+              "Approve"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "ad6c14dc-f18d-4298-933d-ca7650dcfb08"
+          },
+          "type": "If"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

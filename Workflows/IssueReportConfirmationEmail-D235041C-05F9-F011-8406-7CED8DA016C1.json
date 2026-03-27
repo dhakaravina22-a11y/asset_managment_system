@@ -1,0 +1,146 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_office365": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedoffice365_c61f8"
+        },
+        "api": {
+          "name": "shared_office365"
+        }
+      },
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_fea75"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      },
+      "shared_onedriveforbusiness": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedonedriveforbusiness_e3908"
+        },
+        "api": {
+          "name": "shared_onedriveforbusiness"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "ea94d94a-9580-49f0-813d-c0e5dec43699"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 1,
+              "subscriptionRequest/entityname": "cra7c_issues",
+              "subscriptionRequest/scope": 4
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "Send_an_email_(V2)": {
+          "runAfter": {
+            "Get_file_content": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "c1a8e437-62e7-49d3-a768-e289177fa4a6"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_office365",
+              "operationId": "SendEmailV2",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_office365"
+            },
+            "parameters": {
+              "emailMessage/To": "@outputs('Get_User_Details')?['body/internalemailaddress']",
+              "emailMessage/Subject": "Issue Reported:@{triggerOutputs()?['body/cra7c_name']}",
+              "emailMessage/Body": "<p>Hi @{outputs('Get_User_Details')?['body/fullname']},<br>\nThank you for reporting an issue in the Asset Management System. This email is to confirm that we have received your report and our team is looking into it.<br>\n<br>\n<span style=\"font-size: 16px\"><strong>Ticket Details:</strong></span><br>\nDescription: @{triggerOutputs()?['body/cra7c_name']}<br>\nAsset : @{triggerOutputs()?['body/_ravi_asset_value']}<br>\nPriority: @{triggerOutputs()?['body/cra7c_priority']}<br>\nDate Submitted: @{triggerOutputs()?['body/createdon']}<br>\n<br>\n<strong>What happens next?</strong><br>\nA technician will review the details provided. If we require more information or a physical inspection of the asset, we will contact you directly via this email address.<br>\n<br>\nYou can view the status of your request at any time by visiting the Asset Management App.<br>\n<br>\nBest regards,<br>\nIT Support Team<br>\n</p>",
+              "emailMessage/Attachments": [
+                {
+                  "Name": "SRS - Documentation to follow",
+                  "ContentBytes": "@body('Get_file_content')"
+                }
+              ],
+              "emailMessage/Importance": "Normal"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Get_User_Details": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "9e0a9dcd-7e0e-482d-8c9c-f509f54dbc7f"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "systemusers",
+              "recordId": "@triggerOutputs()?['body/_createdby_value']"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Get_file_content": {
+          "runAfter": {
+            "Get_User_Details": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "b!WebYS8vEJ0i_20FX38MTiH2_3Rh6whhJrcTqiC8GViKyjJ5PTgXzSbHsopWdoOXh.01U5MRCN4QXFG6HLPWP5AY6I4WJDLELKCY": "/SRS ITT Request Managment.docx",
+            "operationMetadataId": "7afd967e-b300-4236-81a2-4de9bebdec14"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_onedriveforbusiness",
+              "operationId": "GetFileContent",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_onedriveforbusiness"
+            },
+            "parameters": {
+              "id": "b!WebYS8vEJ0i_20FX38MTiH2_3Rh6whhJrcTqiC8GViKyjJ5PTgXzSbHsopWdoOXh.01U5MRCN4QXFG6HLPWP5AY6I4WJDLELKCY",
+              "inferContentType": true
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

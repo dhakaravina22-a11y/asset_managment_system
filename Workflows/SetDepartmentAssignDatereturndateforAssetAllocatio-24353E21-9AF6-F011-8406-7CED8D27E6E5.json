@@ -1,0 +1,171 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_fea75"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "fd5edc1d-f89c-477d-8a81-c5d31278437a"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 4,
+              "subscriptionRequest/entityname": "cra7c_assetallocation",
+              "subscriptionRequest/scope": 4
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "when a row is modified and deleted then i want this trigger to run"
+        }
+      },
+      "actions": {
+        "Get_User_Details": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "b7e53895-46ff-47ec-b2a8-78eb918c5583"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "GetItem",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "systemusers",
+              "recordId": "@triggerOutputs()?['body/_createdby_value']",
+              "x-ms-odata-metadata-full": true
+            },
+            "authentication": "@parameters('$authentication')"
+          },
+          "description": "when a row is added...add a department in asset allocation based on created by(user)"
+        },
+        "Update_department_value_in_Table(Asset_Allocation)": {
+          "runAfter": {
+            "Get_User_Details": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "d25a68f7-7f94-4f8f-ab8e-31b9ad97bc57"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "UpdateOnlyRecord",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "cra7c_assetallocations",
+              "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+              "item/ravi_Department@odata.bind": "cra7c_departments(@{outputs('Get_User_Details')?['body/_cra7c_deptname_value']})"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "set_return_date_if_asset_is_returned": {
+          "actions": {
+            "Update_a_row": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "91858e1e-3695-4183-af1f-9f59ca6c829f"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "UpdateOnlyRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cra7c_assetallocations",
+                  "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+                  "item/cra7c_returndate": "@utcNow()"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {},
+          "expression": {
+            "equals": [
+              "@triggerOutputs()?['body/cra7c_status']",
+              793370004
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "4d5e1649-1a1e-4903-8fba-8e6182e14b50"
+          },
+          "type": "If",
+          "description": "we are doing this parallely"
+        },
+        "Condition": {
+          "actions": {
+            "Update_a_row_2": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "b24b2eed-6031-4099-8ff3-18d7f887533e"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "UpdateOnlyRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cra7c_assetallocations",
+                  "recordId": "@triggerOutputs()?['body/cra7c_assetallocationid']",
+                  "item/cra7c_assigneddate": "@formatDateTime(utcNow(),'dd-MM-yyyy')"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {},
+          "expression": {
+            "equals": [
+              "@triggerOutputs()?['body/cra7c_approvalstatus']",
+              6
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "0ae87085-d36b-4de1-90e7-0553173d1b70"
+          },
+          "type": "If"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

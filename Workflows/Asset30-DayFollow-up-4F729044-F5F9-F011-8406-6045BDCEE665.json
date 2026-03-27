@@ -1,0 +1,112 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_fea75"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "Run_this_flow_Everyday": {
+          "recurrence": {
+            "frequency": "Day",
+            "interval": 1,
+            "startTime": "2026-01-25T04:30:00Z"
+          },
+          "metadata": {
+            "operationMetadataId": "c962cb74-9994-4ba8-bcae-0617c9169907"
+          },
+          "type": "Recurrence",
+          "description": "Any rows whose status is \"returned\" in Asset Allocation, delete them after 30 days"
+        }
+      },
+      "actions": {
+        "Store_30_days_ago_date": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "3ae8fba4-23a8-4840-9f14-b95d0ff816e7"
+          },
+          "type": "Compose",
+          "inputs": "@addDays(utcNow(), -30, 'yyyy-MM-dd')",
+          "description": "utcNow() -30 -> This will store 30 days ago date"
+        },
+        "Select_rows_where_status_=_returned_and_modified_30_days_ago": {
+          "runAfter": {
+            "Store_30_days_ago_date": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "04448083-1aba-495f-9451-01bdb11116c8"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "cra7c_assetallocations",
+              "$filter": "cra7c_status eq 793370004 and modifiedon lt '@{outputs('Store_30_days_ago_date')}'"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Apply_to_each": {
+          "foreach": "@outputs('Select_rows_where_status_=_returned_and_modified_30_days_ago')?['body/value']",
+          "actions": {
+            "Delete_a_row": {
+              "runAfter": {},
+              "metadata": {
+                "operationMetadataId": "78886d46-f53e-40df-88cf-66bb2bfb2ee9"
+              },
+              "type": "OpenApiConnection",
+              "inputs": {
+                "host": {
+                  "connectionName": "shared_commondataserviceforapps",
+                  "operationId": "DeleteRecord",
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                },
+                "parameters": {
+                  "entityName": "cra7c_assetallocations",
+                  "recordId": "@items('Apply_to_each')?['cra7c_assetallocationid']"
+                },
+                "authentication": "@parameters('$authentication')"
+              }
+            }
+          },
+          "runAfter": {
+            "Select_rows_where_status_=_returned_and_modified_30_days_ago": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "36528539-9d31-4d5f-bc1e-ceb2b7a47f9d"
+          },
+          "type": "Foreach"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

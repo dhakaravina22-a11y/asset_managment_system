@@ -1,0 +1,68 @@
+function sendEmailUsingHttpTrigger(PrimaryControl) {
+
+    let formContext = PrimaryControl;
+
+    var reason = prompt("Enter reason here");
+
+    if (!reason || reason.trim() == "") {
+        formContext.ui.setFormNotification(
+            "Reason cannot be empty.",
+            "ERROR",
+            "reason_error"
+        );
+        return;
+    }
+
+    let recordId = formContext.data.entity.getId();
+    recordId = recordId.replace("{", "").replace("}", "");
+
+let flowUrl = "";
+
+// Get Flow URL from Environment Variable
+Xrm.WebApi.retrieveMultipleRecords(
+    "environmentvariablevalue",
+    "?$select=value&$expand=EnvironmentVariableDefinitionId&$filter=EnvironmentVariableDefinitionId/schemaname eq 'ravi_SendEmailFlowUrl'"
+).then(function (result) {
+    console.log(result);
+
+    if (result.entities.length > 0 && result.entities[0].value) {
+        flowUrl = result.entities[0].value;
+
+        let data = {
+            recordId: recordId,
+            reason: reason
+        };
+
+        //fetch will make the call to browser to call the flow URL and pass the data
+        //Post sends data
+        fetch(flowUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            console.log("Flow response:", response);
+            if (response.ok) {
+                Xrm.Navigation.openAlertDialog(
+                { text: "Email sent successfully." },
+                { height: 120, width: 260 }
+        );
+            } else {
+                Xrm.Navigation.openAlertDialog(
+                { text: "Error sending email." },
+                { height: 120, width: 260 }
+                );
+            }
+        })
+        .catch(error => {
+            alert("Error: " + error.message);
+        });
+
+    } else {
+        alert("Flow URL not configured.");
+    }
+
+});
+}

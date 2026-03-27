@@ -1,0 +1,62 @@
+function createPurchaseIfExternal(executionContext) {
+    console.log(" create purchase Function triggered");
+    console.log(executionContext);
+    console.log(Object.getOwnPropertyNames(Object.getPrototypeOf(executionContext)));
+
+    //.getformContext lets you:
+    //Read field values
+    //Set field values
+    //Save records
+    //Show messages
+    var formContext = executionContext.getFormContext();
+    console.log(formContext);
+    console.log("FormContext Methods:");
+console.log(Object.getOwnPropertyNames(Object.getPrototypeOf(formContext)));
+    //This gets the asset lookup field from the form.
+    //"cra7c_assets" is the schema name of the field
+    var assetField = formContext.getAttribute("cra7c_assets");
+
+
+    if (!assetField || assetField.getValue() == null)
+        return;
+
+    //Lookup fields return an array
+    var assetLookup = assetField.getValue()[0];
+    
+    //The lookup ID usually looks like: {A1B2C3D4-1234-5678-ABCD-1234567890AB}
+    //Removes { and }
+    var assetId = assetLookup.id.replace("{", "").replace("}", "");
+
+    //This gets the display name of the asset
+    var assetName = assetLookup.name;
+
+    Xrm.WebApi.retrieveRecord("cra7c_assets", assetId, "?$select=cra7c_isexternaldevice")
+        .then(function (result) { //.then() runs when the data is successfully retrieved
+            //result contains the asset data.
+            console.log("retrive record",result);
+
+            if (result.cra7c_isexternaldevice === true) {
+                console.log("Asset is an external device. Creating purchase record.");
+
+                var purchaseRecord = {
+                    "cra7c_name": assetName,
+                    "ravi_assets@odata.bind": "/cra7c_assetses(" + assetId + ")"
+
+                    
+                };
+
+                Xrm.WebApi.createRecord("cra7c_purchaseasset", purchaseRecord)
+    .then(function (response) {
+        console.log("Purchase record created successfully");
+        console.log("Record ID:", response.id);
+    })
+    .catch(function (error) {
+        console.log("Error while creating record:");
+        console.log(error.message);
+    });
+            }
+        })
+        .catch(function (error) {
+            console.log(error.message);
+        });
+}

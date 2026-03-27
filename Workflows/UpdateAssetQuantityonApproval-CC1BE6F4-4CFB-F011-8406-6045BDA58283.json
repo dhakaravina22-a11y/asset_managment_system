@@ -1,0 +1,166 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_fea75"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "6611d72c-adf0-49a2-994e-b042862ecd72"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 3,
+              "subscriptionRequest/entityname": "cra7c_assetallocation",
+              "subscriptionRequest/scope": 4,
+              "subscriptionRequest/filteringattributes": "cra7c_status"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "Switch": {
+          "runAfter": {},
+          "cases": {
+            "IF_Status_=_\"Assigned\"": {
+              "case": 793370001,
+              "actions": {
+                "Fetch_Asset_Details": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "66ef51d0-142a-4b3a-8e96-03e1f54e9950"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "GetItem",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                    },
+                    "parameters": {
+                      "entityName": "cra7c_assetses",
+                      "recordId": "@triggerOutputs()?['body/_cra7c_assets_value']"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                },
+                "Update_Quantity_=-1": {
+                  "runAfter": {
+                    "Fetch_Asset_Details": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "1045aa42-60f5-4726-91de-2d52dfce6680"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                    },
+                    "parameters": {
+                      "entityName": "cra7c_assetses",
+                      "recordId": "@triggerOutputs()?['body/_cra7c_assets_value']",
+                      "item/cra7c_availability": "@if(greater(sub(outputs('Fetch_Asset_Details')?['body/ravi_quantity'], 1), 0), true, false)",
+                      "item/ravi_quantity": "@sub(outputs('Fetch_Asset_Details')?['body/ravi_quantity'], 1)"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              }
+            },
+            "IF_Status_=_\"Returned\"": {
+              "case": 793370004,
+              "actions": {
+                "Get_Asset_Details": {
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "1a999c4d-180b-463e-ba9c-f4d7e9e6e4c9"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "GetItem",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                    },
+                    "parameters": {
+                      "entityName": "cra7c_assetses",
+                      "recordId": "@triggerOutputs()?['body/_cra7c_assets_value']"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                },
+                "Update_Quantity_=+1": {
+                  "runAfter": {
+                    "Get_Asset_Details": [
+                      "Succeeded"
+                    ]
+                  },
+                  "metadata": {
+                    "operationMetadataId": "062b420f-7a30-4dbc-82bb-73a25e088fb5"
+                  },
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "host": {
+                      "connectionName": "shared_commondataserviceforapps",
+                      "operationId": "UpdateOnlyRecord",
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                    },
+                    "parameters": {
+                      "entityName": "cra7c_assetses",
+                      "recordId": "@triggerOutputs()?['body/_cra7c_assets_value']",
+                      "item/cra7c_availability": true,
+                      "item/ravi_quantity": "@add(outputs('Get_Asset_Details')?['body/ravi_quantity'], 1)"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "actions": {}
+          },
+          "expression": "@triggerOutputs()?['body/cra7c_status']",
+          "metadata": {
+            "operationMetadataId": "d094e65d-283c-41cb-a1a4-6c0568b6a3f2"
+          },
+          "type": "Switch"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

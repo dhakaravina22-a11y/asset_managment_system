@@ -1,0 +1,58 @@
+function filterAssetsBasedOnUserRole(executionContext) {
+
+    var formContext = executionContext.getFormContext();
+    var assetControl = formContext.getControl("cra7c_assets");
+
+    console.log("OnLoad triggered");
+
+    if (!assetControl) {
+        console.log("Asset control NOT found");
+        return;
+    }
+
+    console.log("Asset control found");
+
+    var departmentValue;
+
+    if (userHasRole("2df5e992-60a3-4645-814e-9b0323032a63")) {//IT - user role id 
+        departmentValue = 880660000;
+        console.log("IT role detected");
+    } else {
+        departmentValue = 880660001;
+        console.log("Non IT role detected");
+    }
+
+    assetControl.addPreSearch(function () {
+
+        console.log("PreSearch fired");
+
+        var filterXml =
+            "<filter type='and'>" +
+                "<condition attribute='ravi_department' operator='eq' value='" + departmentValue + "' />" +
+            "</filter>";
+
+        console.log("Filter XML:", filterXml);
+
+        assetControl.addCustomFilter(filterXml);
+    });
+}
+
+
+
+function userHasRole(roleIdToCheck) {
+
+    var roles = Xrm.Utility.getGlobalContext().userSettings.roles.getAll();
+
+    console.log("User roles:", roles);
+
+    roleIdToCheck = roleIdToCheck.toLowerCase();
+
+    for (var i = 0; i < roles.length; i++) {
+
+        if (roles[i].id.toLowerCase() === roleIdToCheck) {
+            return true;
+        }
+    }
+
+    return false;
+}

@@ -1,0 +1,11 @@
+<environmentvariabledefinition schemaname="ravi_SendEmailFlowUrl">
+  <defaultvalue>https://92dd86952854e8769ac86f7a832fd6.d7.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/ef762fae42514fac85f82d423a6d87e2/triggers/manual/paths/invoke?api-version=1&amp;sp=%2Ftriggers%2Fmanual%2Frun&amp;sv=1.0&amp;sig=IHrZaTtDvdjL4X03EiaUdjyt-5uPR0h63mj-XBxehvM</defaultvalue>
+  <displayname default="SendEmailFlowUrl">
+    <label description="SendEmailFlowUrl" languagecode="1033" />
+  </displayname>
+  <introducedversion>1.2.0.14</introducedversion>
+  <iscustomizable>1</iscustomizable>
+  <isrequired>0</isrequired>
+  <secretstore>0</secretstore>
+  <type>100000000</type>
+</environmentvariabledefinition>

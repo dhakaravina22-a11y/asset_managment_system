@@ -1,0 +1,45 @@
+function validateAssetAvailability(executionContext) {
+
+    var formContext = executionContext.getFormContext();
+
+    // Get asset lookup field
+    var assetField = formContext.getAttribute("cra7c_assets");
+
+    // If no asset selected, clear notification and exit
+    if (!assetField || assetField.getValue() == null) {
+        formContext.getControl("cra7c_assets")
+            .clearNotification("asset_unavailable");
+        return;
+    }
+
+    // Get asset guid ID from lookup
+    var assetId = assetField.getValue()[0].id
+        .replace("{", "")
+        .replace("}", "");
+
+    // Retrieve asset availability
+    Xrm.WebApi.retrieveRecord(
+        "cra7c_assets",
+        assetId,
+        "?$select=cra7c_availability"
+    ).then(function (result) {
+
+        var availability = result.cra7c_availability;
+
+        // If asset not available, show error
+        if (availability === false) {
+            formContext.getControl("cra7c_assets")
+                .setNotification(
+                    "Asset is not available",
+                    "asset_unavailable"
+                );
+        } else {
+            // Clear error if available
+            formContext.getControl("cra7c_assets")
+                .clearNotification("asset_unavailable");
+        }
+
+    }).catch(function (error) {
+        console.error(error.message);
+    });
+}

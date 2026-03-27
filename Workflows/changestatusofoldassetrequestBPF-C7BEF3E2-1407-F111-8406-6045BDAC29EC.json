@@ -1,0 +1,289 @@
+{
+  "properties": {
+    "connectionReferences": {
+      "shared_commondataserviceforapps": {
+        "runtimeSource": "embedded",
+        "connection": {
+          "connectionReferenceLogicalName": "new_sharedcommondataserviceforapps_fea75"
+        },
+        "api": {
+          "name": "shared_commondataserviceforapps"
+        }
+      }
+    },
+    "definition": {
+      "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+      "contentVersion": "1.0.0.0",
+      "parameters": {
+        "$connections": {
+          "defaultValue": {},
+          "type": "Object"
+        },
+        "$authentication": {
+          "defaultValue": {},
+          "type": "SecureObject"
+        }
+      },
+      "triggers": {
+        "When_a_row_is_added,_modified_or_deleted": {
+          "metadata": {
+            "operationMetadataId": "abfd8131-093f-48d3-bcf0-3bbaccc7940e"
+          },
+          "type": "OpenApiConnectionWebhook",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "SubscribeWebhookTrigger",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "subscriptionRequest/message": 3,
+              "subscriptionRequest/entityname": "cra7c_assetallocation",
+              "subscriptionRequest/scope": 4
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        }
+      },
+      "actions": {
+        "List_rows": {
+          "runAfter": {
+            "List_rows_2": [
+              "Succeeded"
+            ]
+          },
+          "metadata": {
+            "operationMetadataId": "24f10b6c-ae26-4715-8126-4e47b2c5735a"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "processstages",
+              "$filter": "stagename eq 'Report/Request Asset'\nor stagename eq 'Manager Review'\nor stagename eq 'Security Clearance'\nor stagename eq 'Assigned'\nor stagename eq 'Returned'\nor stagename eq 'Asset Assigned'\nor stagename eq 'Asset Returned'\nor stagename eq 'Access Denied'\nor stagename eq 'Report Issues'",
+              "x-ms-odata-metadata-full": true
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "List_rows_2": {
+          "runAfter": {},
+          "metadata": {
+            "operationMetadataId": "575becd8-8410-475f-a43f-6f0dbf65277f"
+          },
+          "type": "OpenApiConnection",
+          "inputs": {
+            "host": {
+              "connectionName": "shared_commondataserviceforapps",
+              "operationId": "ListRecords",
+              "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+            },
+            "parameters": {
+              "entityName": "ravi_assetallocationbpfs",
+              "$filter": "_bpf_cra7c_assetallocationid_value eq '@{triggerOutputs()?['body/cra7c_assetallocationid']}'"
+            },
+            "authentication": "@parameters('$authentication')"
+          }
+        },
+        "Switch_2": {
+          "runAfter": {
+            "List_rows": [
+              "Succeeded"
+            ]
+          },
+          "cases": {
+            "Manager_Review_Case": {
+              "case": 2,
+              "actions": {
+                "Apply_to_each_4": {
+                  "foreach": "@outputs('List_rows_2')?['body/value']",
+                  "actions": {
+                    "Update_a_row_to_Manager_Review": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "782450d8-0160-41fc-b52b-2921879d9f9c"
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "UpdateOnlyRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                        },
+                        "parameters": {
+                          "entityName": "ravi_assetallocationbpfs",
+                          "recordId": "@items('Apply_to_each_4')?['businessprocessflowinstanceid']",
+                          "item/activestageid@odata.bind": "/processstages(0f006963-c13b-40b1-bf1d-a5c9cd31bebd)"
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    }
+                  },
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "c6d1fbaa-94f9-41cc-859b-5b8cd87deca8"
+                  },
+                  "type": "Foreach"
+                }
+              }
+            },
+            "Security_Clearance_case": {
+              "case": 3,
+              "actions": {
+                "Apply_to_each_5": {
+                  "foreach": "@outputs('List_rows_2')?['body/value']",
+                  "actions": {
+                    "Update_a_row_to_Security_Clearance": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "734ff37b-f89b-4ee6-a459-c4116f7a398c"
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "UpdateOnlyRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                        },
+                        "parameters": {
+                          "entityName": "ravi_assetallocationbpfs",
+                          "recordId": "@items('Apply_to_each_5')?['businessprocessflowinstanceid']",
+                          "item/activestageid@odata.bind": "/processstages(fd869fb3-e0a7-4d06-8786-b359ea1c1cc2)"
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    }
+                  },
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "0f5baf21-d3a1-4214-925e-93245cad5b53"
+                  },
+                  "type": "Foreach"
+                }
+              }
+            },
+            "Denied_Case": {
+              "case": 5,
+              "actions": {
+                "Apply_to_each_6": {
+                  "foreach": "@outputs('List_rows_2')?['body/value']",
+                  "actions": {
+                    "Update_a_row_to_Denied": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "67b638ed-8077-4b3f-85d1-2ecb2c8b5b34"
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "UpdateOnlyRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                        },
+                        "parameters": {
+                          "entityName": "ravi_assetallocationbpfs",
+                          "recordId": "@items('Apply_to_each_6')?['businessprocessflowinstanceid']",
+                          "item/activestageid@odata.bind": "/processstages(fc2eefd3-9db4-4e66-a464-13e07a6867f7)"
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    }
+                  },
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "d74f4ec6-afce-4597-9c83-a53fc6f8be8c"
+                  },
+                  "type": "Foreach"
+                }
+              }
+            },
+            "Approved_Case": {
+              "case": 4,
+              "actions": {
+                "Apply_to_each": {
+                  "foreach": "@outputs('List_rows_2')?['body/value']",
+                  "actions": {
+                    "Update_a_row_to_\"Approved\"": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "6de9df9e-7e7a-4fa8-80b6-eba40765788a"
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "UpdateOnlyRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                        },
+                        "parameters": {
+                          "entityName": "ravi_assetallocationbpfs",
+                          "recordId": "@items('Apply_to_each')?['businessprocessflowinstanceid']",
+                          "item/activestageid@odata.bind": "/processstages(0f006963-c13b-40b1-bf1d-a5c9cd31bebd)"
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    }
+                  },
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "d540dbba-4332-4f6e-8826-195a8a692f8f"
+                  },
+                  "type": "Foreach"
+                }
+              }
+            },
+            "Assigned_Case": {
+              "case": 6,
+              "actions": {
+                "Apply_to_each_2": {
+                  "foreach": "@outputs('List_rows_2')?['body/value']",
+                  "actions": {
+                    "Update_a_row_to_\"assigned\"": {
+                      "runAfter": {},
+                      "metadata": {
+                        "operationMetadataId": "a738df04-99b6-4643-8040-2d7358b41269"
+                      },
+                      "type": "OpenApiConnection",
+                      "inputs": {
+                        "host": {
+                          "connectionName": "shared_commondataserviceforapps",
+                          "operationId": "UpdateOnlyRecord",
+                          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                        },
+                        "parameters": {
+                          "entityName": "ravi_assetallocationbpfs",
+                          "recordId": "@items('Apply_to_each_2')?['businessprocessflowinstanceid']",
+                          "item/activestageid@odata.bind": "/processstages(14fa9e59-2350-466e-8a8f-555912558bd9)"
+                        },
+                        "authentication": "@parameters('$authentication')"
+                      }
+                    }
+                  },
+                  "runAfter": {},
+                  "metadata": {
+                    "operationMetadataId": "3dd219f4-b30d-4c0d-8b71-dfabf37e74cb"
+                  },
+                  "type": "Foreach"
+                }
+              }
+            }
+          },
+          "default": {
+            "actions": {}
+          },
+          "expression": "@triggerOutputs()?['body/cra7c_approvalstatus']",
+          "metadata": {
+            "operationMetadataId": "9d940ad4-5292-4521-abeb-f3acc4e72f3b"
+          },
+          "type": "Switch"
+        }
+      }
+    },
+    "templateName": ""
+  },
+  "schemaVersion": "1.0.0.0"
+}

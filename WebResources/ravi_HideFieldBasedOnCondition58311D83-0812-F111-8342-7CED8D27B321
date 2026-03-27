@@ -1,0 +1,43 @@
+function hideFieldBasedOnCondition(executionContext) {
+
+    var formContext = executionContext.getFormContext();
+
+    var assetAttribute = formContext.getAttribute("ravi_assets");
+
+
+    var asset_value = assetAttribute.getValue();
+
+
+    console.log("Asset value:", asset_value);
+
+    if (asset_value) {
+
+        var assetId = asset_value[0].id.replace("{", "").replace("}", "");
+
+        if (assetId.toLowerCase() === "0da68f21-4e07-f111-8406-6045bdac29ec") {
+
+            formContext.getControl("statecode").setVisible(false);
+            console.log("Statecode field hidden");
+
+        } else {
+
+            formContext.getControl("statecode").setVisible(true);
+            console.log("Statecode field shown");
+        }
+    }
+
+    var pricePaidAttr = formContext.getAttribute("ravi_pricepaid");
+
+if (pricePaidAttr) {
+    var field = pricePaidAttr.getValue();
+    console.log("Price Paid value:", field);
+
+    if (field === true) {
+        formContext.getControl("statecode1").setVisible(false);
+        console.log("Statecode hidden");
+    } else {
+        formContext.getControl("statecode1").setVisible(true);
+        console.log("Statecode shown");
+    }
+}
+}

@@ -1,0 +1,42 @@
+var PurchaseAsset = PurchaseAsset || {};
+
+PurchaseAsset.markAsPaid = async function (primaryControl) {
+
+    try {
+
+        var grid = primaryControl.getGrid();
+        var selectedRows = grid.getSelectedRows();
+
+        if (selectedRows.getLength() === 0) {
+            Xrm.Navigation.openAlertDialog({ text: "Please select at least one record." });
+            return;
+        }
+
+        var promises = [];
+
+        selectedRows.forEach(function (row) {
+
+            var entity = row.getData().getEntity();
+            var recordId = entity.getId().replace("{", "").replace("}", "");
+            var entityName = entity.getEntityName();
+
+            var data = {
+                "ravi_pricepaid": true   
+            };
+
+            promises.push(
+                Xrm.WebApi.updateRecord(entityName, recordId, data)
+            );
+        });
+
+        await Promise.all(promises);
+
+        Xrm.Navigation.openAlertDialog({ text: "Selected records marked as Paid successfully." });
+
+        primaryControl.refresh();
+
+    } catch (error) {
+        console.log(error.message);
+        Xrm.Navigation.openAlertDialog({ text: "Error: " + error.message });
+    }
+};

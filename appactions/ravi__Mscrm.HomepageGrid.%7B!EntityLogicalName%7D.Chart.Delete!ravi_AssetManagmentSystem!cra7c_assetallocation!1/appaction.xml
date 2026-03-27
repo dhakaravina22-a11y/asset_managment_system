@@ -1,0 +1,37 @@
+<appaction uniquename="ravi__Mscrm.HomepageGrid.{!EntityLogicalName}.Chart.Delete!ravi_AssetManagmentSystem!cra7c_assetallocation!1">
+  <appmoduleid>
+    <uniquename>ravi_AssetManagmentSystem</uniquename>
+  </appmoduleid>
+  <buttonlabeltext default="Delete Chart">
+    <label description="Delete Chart" languagecode="1033" />
+  </buttonlabeltext>
+  <buttontooltipdescription default="Delete this chart. This action cannot be undone.">
+    <label description="Delete this chart. This action cannot be undone." languagecode="1033" />
+  </buttontooltipdescription>
+  <buttontooltiptitle default="Delete Chart">
+    <label description="Delete Chart" languagecode="1033" />
+  </buttontooltiptitle>
+  <context>1</context>
+  <contextentity>
+    <logicalname>cra7c_assetallocation</logicalname>
+  </contextentity>
+  <contextvalue>cra7c_assetallocation</contextvalue>
+  <hidden>0</hidden>
+  <iscustomizable>1</iscustomizable>
+  <isdisabled>0</isdisabled>
+  <isgrouptitlehidden>0</isgrouptitlehidden>
+  <location>1</location>
+  <name>Mscrm.HomepageGrid.{!EntityLogicalName}.Chart.Delete</name>
+  <onclickeventformulacomponentlibraryid>
+    <name>ravi_assetmanagmentsystemdefaultcommandlibrary_a9387</name>
+  </onclickeventformulacomponentlibraryid>
+  <onclickeventformulacomponentname>43b4ee1b6dca496fb8bddb6fbf8f1d93</onclickeventformulacomponentname>
+  <onclickeventformulafunctionname>OnSelect</onclickeventformulafunctionname>
+  <onclickeventtype>1</onclickeventtype>
+  <origin>2</origin>
+  <sequence>1150200060.0000000000</sequence>
+  <statecode>0</statecode>
+  <statuscode>1</statuscode>
+  <type>0</type>
+  <visibilitytype>2</visibilitytype>
+</appaction>
