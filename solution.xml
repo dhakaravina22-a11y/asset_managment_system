@@ -7,11 +7,7 @@
     <Descriptions>
       <Description description="Upgrade of Asset Managment System system" languagecode="1033" />
     </Descriptions>
-<<<<<<< HEAD
-    <Version>1.2.0.22</Version>
-=======
     <Version>1.2.0.25</Version>
->>>>>>> isha
     <Managed>1</Managed>
     <Publisher>
       <UniqueName>Ravina</UniqueName>
